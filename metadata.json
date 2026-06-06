@@ -1,0 +1,6 @@
+{
+  "name": "Music & Song Editor",
+  "description": "An elegant mobile-first web app to edit, split, and equalize music tracks, with integrated track lyrics formatting and metadata embedding.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
