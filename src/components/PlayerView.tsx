@@ -208,7 +208,7 @@ export const PlayerView: React.FC<PlayerViewProps> = ({
             {/* Center Label */}
             <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-950 border border-slate-700/50 flex flex-col items-center justify-center text-[7px] font-bold text-center p-1 text-slate-100 z-10 shadow-md relative">
               <span className="uppercase tracking-widest text-[5px] text-blue-450 mb-0.5">MASTER</span>
-              <span className="truncate w-full max-w-[48px] text-[7px]" title={songTitle || "SurRhythm"}>{songTitle || "SurRhythm"}</span>
+              <span className="truncate w-full max-w-[48px] text-[7px]" title={songTitle || "YOUR"}>{songTitle || "YOUR"}</span>
               <span className="text-[5px] font-mono text-slate-400 mt-0.5">STEREO</span>
               <div className="absolute inset-x-0 inset-y-0 m-auto w-3 h-3 bg-slate-950 border border-slate-805 rounded-full shadow-inner"></div>
             </div>

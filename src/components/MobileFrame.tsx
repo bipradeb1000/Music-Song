@@ -14,7 +14,7 @@ export const MobileFrame: React.FC<MobileFrameProps> = ({ children }) => {
       >
         {/* Dynamic status bar mock for desktop */}
         <div id="phone-notch-header" className="hidden sm:flex bg-slate-950 h-7 items-center justify-between px-6 text-[11px] text-slate-400 font-mono select-none border-b border-slate-900">
-          <span>SurRhythm 5G</span>
+          <span>YOUR</span>
           <div className="w-[110px] h-4 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse mr-1.5"></span>
             <span className="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Studio Mode</span>
