@@ -43,6 +43,21 @@ export class AudioEngine {
   }
 
   public getAnalyser(): AnalyserNode | null {
+    if (!this.analyserNode) {
+      try {
+        const ctx = this.getContext();
+        if (!this.masterGain) {
+          this.masterGain = ctx.createGain();
+          this.masterGain.gain.setValueAtTime(1.0, ctx.currentTime);
+        }
+        this.analyserNode = ctx.createAnalyser();
+        this.analyserNode.fftSize = 128;
+        this.masterGain.connect(this.analyserNode);
+        this.analyserNode.connect(ctx.destination);
+      } catch (err) {
+        console.warn("Failed to lazy initialize master analyser Node", err);
+      }
+    }
     return this.analyserNode;
   }
 

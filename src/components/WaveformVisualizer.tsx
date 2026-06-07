@@ -36,9 +36,19 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({ analyser
       ctx.fillStyle = "rgba(10, 15, 30, 0.25)";
       ctx.fillRect(0, 0, width, height);
 
-      if (analyser && isPlaying) {
+      let hasSignal = false;
+      if (analyser) {
         analyser.getByteFrequencyData(dataArray);
+        // Check if any frequency has a signal indicating active playing (threshold > 4 to filter quiet buzz)
+        for (let i = 0; i < bufferLength; i++) {
+          if (dataArray[i] > 4) {
+            hasSignal = true;
+            break;
+          }
+        }
+      }
 
+      if (analyser && (isPlaying || hasSignal)) {
         const barWidth = (width / bufferLength) * 1.5;
         let x = 0;
 

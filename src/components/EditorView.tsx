@@ -15,11 +15,13 @@ import {
   ListRestart,
   RotateCcw,
   Undo2,
-  Redo2
+  Redo2,
+  Sparkles
 } from "lucide-react";
 import { AudioClip, EqualizerSettings, DynamicAudioSettings } from "../types";
 import { AudioEngine } from "../utils/audioEngine";
 import { WaveformVisualizer } from "./WaveformVisualizer";
+import { CustomInstrumentsBoard } from "./CustomInstrumentsBoard";
 
 interface EditorViewProps {
   engine: AudioEngine;
@@ -61,6 +63,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
   // Audio loading / setup flags
   const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [isCustomInstrumentsOpen, setIsCustomInstrumentsOpen] = useState(false);
+  const [savedCustomInstruments, setSavedCustomInstruments] = useState<AudioClip[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const instrumentInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -404,8 +408,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
         },
       };
 
-      setClips([...clips, newClip]);
-      setSelectedClipId(newClip.id);
+      setSavedCustomInstruments((prev) => [...prev, newClip]);
     } catch (e) {
       console.error("Failed to decode instrument audio file", e);
       alert("Unsupported format. Please select standard MP3, WAV or AAC audio files.");
@@ -724,17 +727,109 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
       {/* Add elements / uploads */}
       <div id="add-elements-grid" className="grid grid-cols-2 gap-3">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex flex-col gap-2 justify-between">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex flex-col gap-2.5 justify-between">
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">🎹 ADD INDIAN INSTRUMENTS</span>
-            <p className="text-[9px] text-slate-500">Upload and import custom Indian instrument loops, pads or voice tracks.</p>
+            <p className="text-[9px] text-slate-505">Play virtual software tracks or import custom instrumentation loops.</p>
           </div>
+
+          <div className="flex items-center justify-between bg-slate-950/65 p-2 rounded-xl border border-slate-850">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-slate-200">Custom Instruments</span>
+              <span className="text-[8px] text-slate-500 font-mono">Launch 20+ Virtual Synths</span>
+            </div>
+            
+            <button
+              id="custom-instruments-toggle"
+              onClick={() => setIsCustomInstrumentsOpen(true)}
+              className="px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-500 text-white text-[10px] font-black tracking-widest uppercase rounded-lg transition-all flex items-center gap-1 active:scale-95 shadow-md shadow-blue-950/50"
+            >
+              <Sparkles size={11} className="animate-pulse" />
+              <span>Play</span>
+            </button>
+          </div>
+
+          {/* List of Saved instruments */}
+          {savedCustomInstruments.length > 0 && (
+            <div className="flex flex-col gap-1.5 mt-1 pb-1 border-t border-slate-800/60 pt-2 bg-slate-950/40 p-2 rounded-xl border border-slate-850/50 max-h-[140px] overflow-y-auto">
+              <span className="text-[8px] font-bold tracking-widest text-indigo-400 uppercase">Saved Recorded Sound list</span>
+              <div className="flex flex-col gap-1">
+                {savedCustomInstruments.map((inst) => (
+                  <div key={inst.id} className="flex items-center justify-between gap-1.5 bg-slate-950/90 rounded-lg p-1.5 border border-slate-850/80">
+                    <div className="flex flex-col truncate flex-1 select-none">
+                      <span className="text-[9px] font-bold text-slate-200 truncate">{inst.name}</span>
+                      <span className="text-[8px] text-slate-500 font-mono leading-none mt-0.5">{inst.duration.toFixed(1)}s Loop</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {/* Playback preview of buffer */}
+                      <button
+                        title="Preview"
+                        onClick={() => {
+                          if (inst.buffer) {
+                            try {
+                              const ctx = engine.getContext();
+                              const source = ctx.createBufferSource();
+                              source.buffer = inst.buffer;
+                              const analyser = engine.getAnalyser();
+                              if (analyser) {
+                                source.connect(analyser);
+                              } else {
+                                source.connect(ctx.destination);
+                              }
+                              source.start(0);
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }
+                        }}
+                        className="p-1 rounded bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-100 transition-all hover:bg-slate-800"
+                      >
+                        <Play size={9} fill="currentColor" />
+                      </button>
+
+                      {/* Add directly to timeline */}
+                      <button
+                        title="Add loop to timeline"
+                        onClick={() => {
+                          const timelineId = `${inst.id}-timeline-${Date.now()}`;
+                          const copyClip: AudioClip = {
+                            ...inst,
+                            id: timelineId,
+                            startOffset: engine.getTimelineLength(clips),
+                          };
+                          takeInteractionSnapshot();
+                          setClips([...clips, copyClip]);
+                          setSelectedClipId(timelineId);
+                          commitInteractionSnapshot();
+                        }}
+                        className="px-1.5 py-0.5 bg-blue-650 hover:bg-blue-600 text-white text-[8px] font-black tracking-widest uppercase rounded transition-all"
+                      >
+                        + Add
+                      </button>
+
+                      {/* Delete from saved list */}
+                      <button
+                        title="Delete recording"
+                        onClick={() => {
+                          setSavedCustomInstruments((prev) => prev.filter(item => item.id !== inst.id));
+                        }}
+                        className="p-1 rounded bg-slate-900 border border-slate-800 hover:bg-red-950/50 hover:border-red-900 text-slate-500 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 size={9} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
             id="browse-instrument-trigger"
             onClick={() => instrumentInputRef.current?.click()}
-            className="w-full py-3 bg-slate-850 border border-dashed border-slate-700 text-slate-400 hover:bg-slate-800/80 rounded-xl text-center text-xs font-semibold flex flex-col items-center gap-1 hover:text-slate-200 transition-colors"
+            className="w-full py-1.5 bg-slate-850 border border-dashed border-slate-705 text-slate-400 hover:bg-slate-800/80 rounded-xl text-center text-[10px] font-semibold flex items-center justify-center gap-1 hover:text-slate-200 transition-colors"
           >
-            <Upload size={16} />
+            <Upload size={12} />
             <span>select instrument file</span>
           </button>
           <input
@@ -1031,6 +1126,18 @@ export const EditorView: React.FC<EditorViewProps> = ({
           FINALIZE
         </button>
       </div>
+
+      {isCustomInstrumentsOpen && (
+        <CustomInstrumentsBoard
+          audioContext={engine.getContext()}
+          externalAnalyser={engine.getAnalyser()}
+          onAddRecordedClip={(newClip) => {
+            // Save recording inside savedCustomInstruments to appear in 🎹 ADD INDIAN INSTRUMENTS
+            setSavedCustomInstruments((prev) => [...prev, newClip]);
+          }}
+          onClose={() => setIsCustomInstrumentsOpen(false)}
+        />
+      )}
     </div>
   );
 };
